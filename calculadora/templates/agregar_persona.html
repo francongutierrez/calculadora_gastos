@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agregar Persona</title>
+</head>
+<body>
+    <h1>Agregar Persona</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Agregar</button>
+    </form>
+
+    <h2>Lista de Personas</h2>
+    <ul>
+        {% for persona in personas %}
+            <li>
+                {{ persona.nombre }} - ${{ persona.gasto }}
+                <a href="{% url 'eliminar_persona' persona.id %}"><button>Eliminar</button></a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'calcular_deudas' %}"><button>Calcular Deudas</button></a>
+    <a href="{% url 'limpiar_datos' %}"><button>Limpiar Datos</button></a>
+</body>
+</html>

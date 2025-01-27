@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calcular Deudas</title>
+</head>
+<body>
+    <h1>Transacciones</h1>
+    <ul>
+        {% for transaccion in transacciones %}
+            <li>
+                {{ transaccion.de }} debe pagar ${{ transaccion.monto|floatformat:2 }} a {{ transaccion.a }}
+            </li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'agregar_persona' %}"><button>Volver a Agregar Personas</button></a>
+</body>
+</html>
