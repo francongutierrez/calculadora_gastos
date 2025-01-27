@@ -2,26 +2,132 @@
 <html>
 <head>
     <title>Agregar Persona</title>
+    <script>
+        function agregarPersona() {
+            const nombre = document.getElementById('nombre').value;
+            const gasto = document.getElementById('gasto').value;
+
+            fetch('{% url "agregar_persona_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    nombre: nombre,
+                    gasto: gasto
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    // Agregar la nueva persona a la lista
+                    const lista = document.getElementById('lista-personas');
+                    const nuevoItem = document.createElement('li');
+                    nuevoItem.id = `persona-${data.id}`;
+                    nuevoItem.innerHTML = `
+                        ${data.nombre} - $${data.gasto}
+                        <button onclick="eliminarPersona(${data.id})">Eliminar</button>
+                    `;
+                    lista.appendChild(nuevoItem);
+
+                    // Limpiar el formulario
+                    document.getElementById('nombre').value = '';
+                    document.getElementById('gasto').value = '';
+                }
+            });
+        }
+
+        function eliminarPersona(personaId) {
+            fetch(`/eliminar/${personaId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Eliminar la persona de la lista
+                    const item = document.getElementById(`persona-${personaId}`);
+                    item.remove();
+                } else {
+                    alert('Error al eliminar la persona');
+                }
+            });
+        }
+    </script>
 </head>
 <body>
     <h1>Agregar Persona</h1>
-    <form method="post">
+    <form onsubmit="event.preventDefault(); agregarPersona();">
         {% csrf_token %}
-        {{ form.as_p }}
+        <input type="text" id="nombre" placeholder="Nombre" required>
+        <input type="number" id="gasto" placeholder="Gasto" step="0.01" required>
         <button type="submit">Agregar</button>
     </form>
 
     <h2>Lista de Personas</h2>
-    <ul>
+    <ul id="lista-personas">
         {% for persona in personas %}
-            <li>
+            <li id="persona-{{ persona.id }}">
                 {{ persona.nombre }} - ${{ persona.gasto }}
-                <a href="{% url 'eliminar_persona' persona.id %}"><button>Eliminar</button></a>
+                    <!-- <button onclick="eliminarPersona({{ persona.id }})">Eliminar</button> -->
             </li>
         {% endfor %}
     </ul>
 
-    <a href="{% url 'calcular_deudas' %}"><button>Calcular Deudas</button></a>
-    <a href="{% url 'limpiar_datos' %}"><button>Limpiar Datos</button></a>
+    <button onclick="calcularDeudas()">Calcular Deudas</button>
+    <div id="resultado-deudas"></div>
+
+    <script>
+        function limpiarDatos() {
+            fetch('{% url "limpiar_datos" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Limpiar la lista de personas
+                    const lista = document.getElementById('lista-personas');
+                    lista.innerHTML = '';
+                } else {
+                    alert('Error al limpiar los datos');
+                }
+            });
+        }
+
+        function calcularDeudas() {
+        fetch('{% url "calcular_deudas" %}', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.transacciones) {
+                // Mostrar las transacciones
+                const resultado = document.getElementById('resultado-deudas');
+                resultado.innerHTML = '<h2>Transacciones</h2><ul>';
+                data.transacciones.forEach(transaccion => {
+                    resultado.innerHTML += `
+                        <li>
+                            ${transaccion.de} debe pagar $${transaccion.monto.toFixed(2)} a ${transaccion.a}
+                        </li>
+                    `;
+                });
+                resultado.innerHTML += '</ul>';
+            } else {
+                alert('Error al calcular las deudas');
+            }
+        });
+    }
+    </script>
 </body>
 </html>
