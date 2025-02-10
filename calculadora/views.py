@@ -112,3 +112,8 @@ def eliminar_persona(request, persona_id):
         persona.delete()
         return JsonResponse({'success': True})
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+def home(request):
+    return render(request, 'index.html')  # Asegúrate de que exista este archivo en `templates/`
+    
